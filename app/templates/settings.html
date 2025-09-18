@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="bot" class="logo-icon"></i>
+                    <span>AI Chat</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i data-lucide="message-circle"></i>
+                    <span>Чат</span>
+                </a>
+                <a href="/conversations" class="nav-item">
+                    <i data-lucide="folder"></i>
+                    <span>Диалоги</span>
+                </a>
+                <a href="/settings" class="nav-item active">
+                    <i data-lucide="settings"></i>
+                    <span>Настройки</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Настройки</h1>
+                    <p>Управление провайдерами AI и MCP серверами</p>
+                </div>
+            </div>
+            
+            <div class="settings-content">
+                <!-- LLM Providers Settings -->
+                <section class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i data-lucide="brain"></i>
+                            Провайдеры LLM
+                        </h2>
+                        <p class="section-description">Настройка API ключей для различных провайдеров искусственного интеллекта</p>
+                    </div>
+                    
+                    <div class="provider-cards">
+                        <div class="provider-card">
+                            <div class="provider-header">
+                                <div class="provider-info">
+                                    <h3>OpenAI</h3>
+                                    <span class="provider-status" id="openai-status">
+                                        <span class="status-dot offline"></span>
+                                        Не настроен
+                                    </span>
+                                </div>
+                                <button class="btn-icon" onclick="toggleProvider('openai')">
+                                    <i data-lucide="settings"></i>
+                                </button>
+                            </div>
+                            <div class="provider-config" id="openai-config" style="display: none;">
+                                <div class="form-group">
+                                    <label for="openai-key">API ключ</label>
+                                    <input type="password" id="openai-key" placeholder="sk-...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="openai-model">Модель по умолчанию</label>
+                                    <select id="openai-model">
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    </select>
+                                </div>
+                                <div class="provider-actions">
+                                    <button class="btn-secondary" onclick="testProvider('openai')">
+                                        <i data-lucide="zap"></i>
+                                        Тест
+                                    </button>
+                                    <button class="btn-primary" onclick="saveProvider('openai')">
+                                        <i data-lucide="save"></i>
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="provider-card">
+                            <div class="provider-header">
+                                <div class="provider-info">
+                                    <h3>Grok (xAI)</h3>
+                                    <span class="provider-status" id="grok-status">
+                                        <span class="status-dot offline"></span>
+                                        Не настроен
+                                    </span>
+                                </div>
+                                <button class="btn-icon" onclick="toggleProvider('grok')">
+                                    <i data-lucide="settings"></i>
+                                </button>
+                            </div>
+                            <div class="provider-config" id="grok-config" style="display: none;">
+                                <div class="form-group">
+                                    <label for="grok-key">API ключ</label>
+                                    <input type="password" id="grok-key" placeholder="xai-...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="grok-model">Модель по умолчанию</label>
+                                    <select id="grok-model">
+                                        <option value="grok-beta">Grok Beta</option>
+                                    </select>
+                                </div>
+                                <div class="provider-actions">
+                                    <button class="btn-secondary" onclick="testProvider('grok')">
+                                        <i data-lucide="zap"></i>
+                                        Тест
+                                    </button>
+                                    <button class="btn-primary" onclick="saveProvider('grok')">
+                                        <i data-lucide="save"></i>
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="provider-card">
+                            <div class="provider-header">
+                                <div class="provider-info">
+                                    <h3>Anthropic</h3>
+                                    <span class="provider-status" id="anthropic-status">
+                                        <span class="status-dot offline"></span>
+                                        Не настроен
+                                    </span>
+                                </div>
+                                <button class="btn-icon" onclick="toggleProvider('anthropic')">
+                                    <i data-lucide="settings"></i>
+                                </button>
+                            </div>
+                            <div class="provider-config" id="anthropic-config" style="display: none;">
+                                <div class="form-group">
+                                    <label for="anthropic-key">API ключ</label>
+                                    <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="anthropic-model">Модель по умолчанию</label>
+                                    <select id="anthropic-model">
+                                        <option value="claude-3-opus">Claude 3 Opus</option>
+                                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                        <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                    </select>
+                                </div>
+                                <div class="provider-actions">
+                                    <button class="btn-secondary" onclick="testProvider('anthropic')">
+                                        <i data-lucide="zap"></i>
+                                        Тест
+                                    </button>
+                                    <button class="btn-primary" onclick="saveProvider('anthropic')">
+                                        <i data-lucide="save"></i>
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- MCP Servers Settings -->
+                <section class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i data-lucide="server"></i>
+                            MCP Серверы
+                        </h2>
+                        <p class="section-description">Управление серверами Model Context Protocol для расширенной функциональности</p>
+                        <button class="btn-primary" onclick="showAddMcpModal()">
+                            <i data-lucide="plus"></i>
+                            Добавить MCP сервер
+                        </button>
+                    </div>
+                    
+                    <div class="mcp-servers" id="mcp-servers">
+                        <!-- MCP servers will be loaded here -->
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i data-lucide="server"></i>
+                            </div>
+                            <h3>Нет настроенных MCP серверов</h3>
+                            <p>Добавьте MCP сервер для расширения возможностей AI</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- General Settings -->
+                <section class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i data-lucide="sliders"></i>
+                            Общие настройки
+                        </h2>
+                        <p class="section-description">Основные параметры приложения</p>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Автосохранение диалогов</span>
+                                <input type="checkbox" id="auto-save" checked>
+                                <span class="toggle-switch"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Темная тема</span>
+                                <input type="checkbox" id="dark-mode">
+                                <span class="toggle-switch"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Звуковые уведомления</span>
+                                <input type="checkbox" id="sound-notifications">
+                                <span class="toggle-switch"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="max-tokens">Максимум токенов в ответе</label>
+                            <input type="number" id="max-tokens" value="2048" min="100" max="8000">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="temperature">Температура генерации</label>
+                            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                            <span class="range-value">0.7</span>
+                        </div>
+                    </div>
+                    
+                    <div class="section-actions">
+                        <button class="btn-secondary" onclick="resetSettings()">
+                            <i data-lucide="rotate-ccw"></i>
+                            Сбросить настройки
+                        </button>
+                        <button class="btn-primary" onclick="saveGeneralSettings()">
+                            <i data-lucide="save"></i>
+                            Сохранить настройки
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Add MCP Server Modal -->
+    <div id="add-mcp-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить MCP сервер</h3>
+                <button class="modal-close" onclick="closeAddMcpModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="add-mcp-form">
+                    <div class="form-group">
+                        <label for="mcp-name">Название</label>
+                        <input type="text" id="mcp-name" required placeholder="Например: fast_bitrix24_mcp2">
+                    </div>
+                    <div class="form-group">
+                        <label for="mcp-url">URL</label>
+                        <input type="text" id="mcp-url" required placeholder="https://example.com/sse">
+                    </div>
+                    <div class="form-group">
+                        <label for="mcp-transport">Транспорт</label>
+                        <select id="mcp-transport">
+                            <option value="sse" selected>SSE</option>
+                            <option value="websocket">WebSocket</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcp-env">Переменные окружения (JSON)</label>
+                        <textarea id="mcp-env" placeholder='{"BITRIX_WEBHOOK_URL": "https://..."}'></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="mcp-description">Описание</label>
+                        <input type="text" id="mcp-description" placeholder="Bitrix24 MCP сервер">
+                    </div>
+                    <div class="form-group">
+                        <label class="setting-label">
+                            <span>Активен</span>
+                            <input type="checkbox" id="mcp-active" checked>
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddMcpModal()">Отмена</button>
+                <button class="btn-primary" onclick="addMcpServer()">Добавить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/websocket.js') }}"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Settings management functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProviderStatuses();
+            loadMcpServers();
+            loadGeneralSettings();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Temperature slider
+            const temperatureSlider = document.getElementById('temperature');
+            const temperatureValue = document.querySelector('.range-value');
+            
+            temperatureSlider.addEventListener('input', function() {
+                temperatureValue.textContent = this.value;
+            });
+        }
+        
+        async function loadProviderStatuses() {
+            try {
+                const response = await fetch('/api/providers');
+                const providers = await response.json();
+                
+                // Load saved provider configurations from database
+                for (const providerName of ['openai', 'grok', 'anthropic']) {
+                    try {
+                        const configResponse = await fetch(`/api/providers/${providerName}/config`);
+                        if (configResponse.ok) {
+                            const config = await configResponse.json();
+                            if (config.is_configured) {
+                                updateProviderStatus(providerName, true);
+                                // Load saved values into form fields
+                                if (config.default_model) {
+                                    const modelSelect = document.getElementById(`${providerName}-model`);
+                                    if (modelSelect) {
+                                        modelSelect.value = config.default_model;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Could not load config for ${providerName}:`, error);
+                    }
+                }
+                
+                // Update UI based on available providers
+                Object.entries(providers).forEach(([name, info]) => {
+                    // Only update status if we haven't already set it to configured
+                    const statusElement = document.getElementById(`${name}-status`);
+                    if (statusElement && statusElement.textContent.includes('Не настроен')) {
+                        updateProviderStatus(name, info.available);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading provider statuses:', error);
+            }
+        }
+        
+        function updateProviderStatus(provider, available) {
+            const statusElement = document.getElementById(`${provider}-status`);
+            const statusDot = statusElement.querySelector('.status-dot');
+            
+            if (available) {
+                statusDot.className = 'status-dot online';
+                statusElement.innerHTML = '<span class="status-dot online"></span>Настроен';
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusElement.innerHTML = '<span class="status-dot offline"></span>Не настроен';
+            }
+        }
+        
+        function toggleProvider(provider) {
+            const config = document.getElementById(`${provider}-config`);
+            config.style.display = config.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        async function testProvider(provider) {
+            const keyInput = document.getElementById(`${provider}-key`);
+            const apiKey = keyInput.value;
+            
+            if (!apiKey) {
+                showError('Введите API ключ');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/providers/${provider}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        api_key: apiKey,
+                        default_model: document.getElementById(`${provider}-model`).value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'connected') {
+                    showSuccess('Провайдер работает корректно');
+                } else {
+                    showError(result.message || result.detail || 'Ошибка тестирования провайдера');
+                }
+            } catch (error) {
+                console.error('Error testing provider:', error);
+                showError('Ошибка тестирования провайдера');
+            }
+        }
+        
+        async function saveProvider(provider) {
+            const keyInput = document.getElementById(`${provider}-key`);
+            const modelSelect = document.getElementById(`${provider}-model`);
+            
+            // Don't save if no API key is provided
+            if (!keyInput.value) {
+                showError('Введите API ключ');
+                return;
+            }
+            
+            const config = {
+                api_key: keyInput.value,
+                default_model: modelSelect.value
+            };
+            
+            try {
+                const response = await fetch(`/api/providers/${provider}/config`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                if (response.ok) {
+                    showSuccess('Настройки провайдера сохранены');
+                    updateProviderStatus(provider, true);
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Ошибка сохранения настроек');
+                }
+            } catch (error) {
+                console.error('Error saving provider:', error);
+                showError('Ошибка сохранения настроек');
+            }
+        }
+        
+        async function loadMcpServers() {
+            try {
+                const response = await fetch('/api/mcp/servers');
+                const data = await response.json();
+                renderMcpServers(data.servers || []);
+            } catch (error) {
+                console.error('Error loading MCP servers:', error);
+            }
+        }
+        
+        function renderMcpServers(servers) {
+            const container = document.getElementById('mcp-servers');
+            
+            if (servers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="server"></i>
+                        </div>
+                        <h3>Нет настроенных MCP серверов</h3>
+                        <p>Добавьте MCP сервер для расширения возможностей AI</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            
+            const serversHtml = servers.map(server => `
+                <div class="mcp-server-card">
+                    <div class="server-header">
+                        <div class="server-info">
+                            <h4>${server.name}</h4>
+                            <span class="server-status ${server.active ? 'online' : 'offline'}">
+                                <span class="status-dot ${server.active ? 'online' : 'offline'}"></span>
+                                ${server.active ? 'Активен' : 'Неактивен'}
+                            </span>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn-icon" onclick="testMcpServer('${server.url}')" title="Тест соединения">
+                                <i data-lucide="zap"></i>
+                            </button>
+                            <button class="btn-icon" onclick="deleteMcpServer('${server.id}')" title="Удалить">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="server-details">
+                        <p><strong>URL:</strong> ${server.url}</p>
+                        <p><strong>Транспорт:</strong> ${server.transport}</p>
+                        <p><strong>ENV:</strong> ${server.env ? Object.keys(server.env).length : 0} переменных</p>
+                        ${server.description ? `<p><strong>Описание:</strong> ${server.description}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = serversHtml;
+            lucide.createIcons();
+        }
+        
+        function showAddMcpModal() {
+            document.getElementById('add-mcp-modal').classList.remove('hidden');
+        }
+        
+        function closeAddMcpModal() {
+            document.getElementById('add-mcp-modal').classList.add('hidden');
+            document.getElementById('add-mcp-form').reset();
+        }
+        
+        async function addMcpServer() {
+            const form = document.getElementById('add-mcp-form');
+            const formData = new FormData(form);
+            
+            let env = {};
+            try {
+                env = JSON.parse(document.getElementById('mcp-env').value || '{}');
+            } catch (e) {
+                showError('ENV должен быть корректным JSON');
+                return;
+            }
+            const serverConfig = {
+                name: document.getElementById('mcp-name').value,
+                url: document.getElementById('mcp-url').value,
+                transport: document.getElementById('mcp-transport').value,
+                env: env,
+                description: document.getElementById('mcp-description').value || null,
+                active: document.getElementById('mcp-active').checked,
+            };
+            
+            try {
+                const response = await fetch('/api/mcp/servers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(serverConfig)
+                });
+                
+                if (response.ok) {
+                    showSuccess('MCP сервер добавлен');
+                    closeAddMcpModal();
+                    loadMcpServers();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    showError(err.detail || 'Ошибка добавления MCP сервера');
+                }
+            } catch (error) {
+                console.error('Error adding MCP server:', error);
+                showError('Ошибка добавления MCP сервера');
+            }
+        }
+
+        async function testMcpServer(url) {
+            try {
+                const response = await fetch('/api/mcp/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showSuccess(`Подключение успешно, ${Math.round(result.response_time_ms)} мс`);
+                } else {
+                    showError(result.message || 'Ошибка подключения');
+                }
+            } catch (e) {
+                showError('Ошибка теста подключения');
+            }
+        }
+        
+        async function toggleMcpServer(serverId) {
+            try {
+                const response = await fetch(`/api/mcp/servers/${serverId}/toggle`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    loadMcpServers();
+                } else {
+                    showError('Ошибка управления MCP сервером');
+                }
+            } catch (error) {
+                console.error('Error toggling MCP server:', error);
+                showError('Ошибка управления MCP сервером');
+            }
+        }
+        
+        async function deleteMcpServer(serverId) {
+            if (confirm('Вы уверены, что хотите удалить этот MCP сервер?')) {
+                try {
+                    const response = await fetch(`/api/mcp/servers/${serverId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        showSuccess('MCP сервер удален');
+                        loadMcpServers();
+                    } else {
+                        showError('Ошибка удаления MCP сервера');
+                    }
+                } catch (error) {
+                    console.error('Error deleting MCP server:', error);
+                    showError('Ошибка удаления MCP сервера');
+                }
+            }
+        }
+        
+        function loadGeneralSettings() {
+            // Load general settings from storage or API
+            const autoSave = localStorage.getItem('autoSave') !== 'false';
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            const soundNotifications = localStorage.getItem('soundNotifications') === 'true';
+            const maxTokens = localStorage.getItem('maxTokens') || '2048';
+            const temperature = localStorage.getItem('temperature') || '0.7';
+            
+            document.getElementById('auto-save').checked = autoSave;
+            document.getElementById('dark-mode').checked = darkMode;
+            document.getElementById('sound-notifications').checked = soundNotifications;
+            document.getElementById('max-tokens').value = maxTokens;
+            document.getElementById('temperature').value = temperature;
+            document.querySelector('.range-value').textContent = temperature;
+        }
+        
+        function saveGeneralSettings() {
+            const autoSave = document.getElementById('auto-save').checked;
+            const darkMode = document.getElementById('dark-mode').checked;
+            const soundNotifications = document.getElementById('sound-notifications').checked;
+            const maxTokens = document.getElementById('max-tokens').value;
+            const temperature = document.getElementById('temperature').value;
+            
+            localStorage.setItem('autoSave', autoSave);
+            localStorage.setItem('darkMode', darkMode);
+            localStorage.setItem('soundNotifications', soundNotifications);
+            localStorage.setItem('maxTokens', maxTokens);
+            localStorage.setItem('temperature', temperature);
+            
+            showSuccess('Настройки сохранены');
+        }
+        
+        function resetSettings() {
+            if (confirm('Вы уверены, что хотите сбросить все настройки?')) {
+                localStorage.clear();
+                loadGeneralSettings();
+                showSuccess('Настройки сброшены');
+            }
+        }
+        
+        function showSuccess(message) {
+            // Implementation for success notifications
+            console.log('Success:', message);
+            alert('Успех: ' + message);
+        }
+        
+        function showError(message) {
+            // Implementation for error notifications
+            console.error('Error:', message);
+            alert('Ошибка: ' + message);
+        }
+    </script>
+</body>
+</html>

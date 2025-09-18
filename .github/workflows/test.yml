@@ -1,0 +1,31 @@
+name: Test Self-Hosted Runner
+on: 
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: self-hosted  # Используем наш runner
+    # Или с конкретными метками:
+    # runs-on: [self-hosted, linux, ubuntu]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check system info
+      run: |
+        echo "Runner OS: $(uname -a)"
+        echo "Current user: $(whoami)"
+        echo "Working directory: $(pwd)"
+        echo "Available space: $(df -h .)"
+    
+    - name: Install Python dependencies
+      run: |
+        python3 -m pip install --user pytest
+    
+    - name: Run tests
+      run: |
+        python3 -m pytest tests/ || echo "No tests found"

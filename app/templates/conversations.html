@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="bot" class="logo-icon"></i>
+                    <span>AI Chat</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i data-lucide="message-circle"></i>
+                    <span>Чат</span>
+                </a>
+                <a href="/conversations" class="nav-item active">
+                    <i data-lucide="folder"></i>
+                    <span>Диалоги</span>
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Настройки</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Управление диалогами</h1>
+                    <p>Просматривайте и управляйте вашими диалогами с AI</p>
+                </div>
+                
+                <div class="page-actions">
+                    <button id="delete-selected-btn" class="btn-secondary" disabled>
+                        <i data-lucide="trash-2"></i>
+                        Удалить выбранные
+                    </button>
+                    <button id="new-conversation-btn" class="btn-primary">
+                        <i data-lucide="plus"></i>
+                        Новый диалог
+                    </button>
+                </div>
+            </div>
+            
+            <div class="conversations-grid">
+                <div class="conversations-filters">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-conversations" placeholder="Поиск диалогов...">
+                    </div>
+                    
+                    <div class="filter-options">
+                        <select id="provider-filter">
+                            <option value="">Все провайдеры</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="grok">Grok</option>
+                            <option value="anthropic">Anthropic</option>
+                        </select>
+                        
+                        <select id="date-filter">
+                            <option value="">Все даты</option>
+                            <option value="today">Сегодня</option>
+                            <option value="week">Эта неделя</option>
+                            <option value="month">Этот месяц</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="conversations-list" id="conversations-list">
+                    <!-- Conversations will be loaded here -->
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="message-circle"></i>
+                        </div>
+                        <h3>Пока нет диалогов</h3>
+                        <p>Начните новый диалог, чтобы увидеть его здесь</p>
+                        <button class="btn-primary" onclick="window.location.href='/'">
+                            <i data-lucide="plus"></i>
+                            Создать первый диалог
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be rendered here -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Подтверждение удаления</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить выбранные диалоги? Это действие нельзя отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Отмена</button>
+                <button class="btn-danger" onclick="confirmDelete()">Удалить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/websocket.js') }}"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Conversations management functionality
+        let selectedConversations = new Set();
+        
+        // Load conversations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConversations();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('search-conversations').addEventListener('input', debounce(filterConversations, 300));
+            
+            // Filter functionality
+            document.getElementById('provider-filter').addEventListener('change', filterConversations);
+            document.getElementById('date-filter').addEventListener('change', filterConversations);
+            
+            // New conversation button
+            document.getElementById('new-conversation-btn').addEventListener('click', () => {
+                window.location.href = '/';
+            });
+            
+            // Delete selected button
+            document.getElementById('delete-selected-btn').addEventListener('click', showDeleteModal);
+        }
+        
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/conversations');
+                const conversations = await response.json();
+                renderConversations(conversations);
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                showError('Ошибка загрузки диалогов');
+            }
+        }
+        
+        function renderConversations(conversations) {
+            const container = document.getElementById('conversations-list');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="message-circle"></i>
+                        </div>
+                        <h3>Пока нет диалогов</h3>
+                        <p>Начните новый диалог, чтобы увидеть его здесь</p>
+                        <button class="btn-primary" onclick="window.location.href='/'">
+                            <i data-lucide="plus"></i>
+                            Создать первый диалог
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            
+            const conversationsHtml = conversations.map(conv => `
+                <div class="conversation-card" data-id="${conv.id}">
+                    <div class="conversation-header">
+                        <input type="checkbox" class="conversation-checkbox" value="${conv.id}" 
+                               onchange="toggleConversationSelection('${conv.id}')">
+                        <div class="conversation-info">
+                            <h3 class="conversation-title">${conv.title || 'Новый диалог'}</h3>
+                            <div class="conversation-meta">
+                                <span class="provider-badge">${conv.provider}</span>
+                                <span class="date">${formatDate(conv.created_at)}</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="btn-icon" onclick="openConversation('${conv.id}')" title="Открыть">
+                                <i data-lucide="external-link"></i>
+                            </button>
+                            <button class="btn-icon" onclick="deleteConversation('${conv.id}')" title="Удалить">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="conversation-preview">
+                        <p>${conv.last_message || 'Нет сообщений'}</p>
+                    </div>
+                    <div class="conversation-stats">
+                        <span class="message-count">
+                            <i data-lucide="message-circle"></i>
+                            ${conv.message_count} сообщений
+                        </span>
+                        <span class="last-activity">
+                            Обновлено ${formatDate(conv.updated_at)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = conversationsHtml;
+            lucide.createIcons();
+        }
+        
+        function toggleConversationSelection(id) {
+            if (selectedConversations.has(id)) {
+                selectedConversations.delete(id);
+            } else {
+                selectedConversations.add(id);
+            }
+            
+            updateDeleteButton();
+        }
+        
+        function updateDeleteButton() {
+            const deleteBtn = document.getElementById('delete-selected-btn');
+            deleteBtn.disabled = selectedConversations.size === 0;
+            deleteBtn.textContent = selectedConversations.size > 0 
+                ? `Удалить выбранные (${selectedConversations.size})` 
+                : 'Удалить выбранные';
+        }
+        
+        function openConversation(id) {
+            window.location.href = `/?conversation=${id}`;
+        }
+        
+        async function deleteConversation(id) {
+            if (confirm('Вы уверены, что хотите удалить этот диалог?')) {
+                try {
+                    const response = await fetch(`/api/conversations/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        loadConversations();
+                        showSuccess('Диалог удален');
+                    } else {
+                        showError('Ошибка удаления диалога');
+                    }
+                } catch (error) {
+                    console.error('Error deleting conversation:', error);
+                    showError('Ошибка удаления диалога');
+                }
+            }
+        }
+        
+        function showDeleteModal() {
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+        }
+        
+        async function confirmDelete() {
+            try {
+                const promises = Array.from(selectedConversations).map(id =>
+                    fetch(`/api/conversations/${id}`, { method: 'DELETE' })
+                );
+                
+                await Promise.all(promises);
+                
+                selectedConversations.clear();
+                updateDeleteButton();
+                closeDeleteModal();
+                loadConversations();
+                showSuccess('Диалоги удалены');
+            } catch (error) {
+                console.error('Error deleting conversations:', error);
+                showError('Ошибка удаления диалогов');
+            }
+        }
+        
+        function filterConversations() {
+            // Implementation for filtering conversations
+            loadConversations(); // Reload with filters
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        function showSuccess(message) {
+            // Implementation for success notifications
+            console.log('Success:', message);
+        }
+        
+        function showError(message) {
+            // Implementation for error notifications
+            console.error('Error:', message);
+        }
+    </script>
+</body>
+</html>

@@ -21,11 +21,12 @@ jobs:
         echo "Current user: $(whoami)"
         echo "Working directory: $(pwd)"
         echo "Available space: $(df -h .)"
-    
+    # - name: nstall uv
     - name: Install Python dependencies
       run: |
-        python3 -m pip install --user pytest
+        cd home/runner/asd
+        uv sync
     
     - name: Run tests
       run: |
-        python3 -m pytest tests/ || echo "No tests found"
+        uv run main.py || echo "No tests found"

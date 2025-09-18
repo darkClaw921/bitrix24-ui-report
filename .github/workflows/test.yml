@@ -24,7 +24,7 @@ jobs:
     # - name: nstall uv
     - name: Install Python dependencies
       run: |
-        cd home/runner/asd
+        
         uv sync
     
     - name: Run tests
